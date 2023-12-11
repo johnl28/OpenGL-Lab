@@ -12,6 +12,8 @@ public:
 	void LinkProgram();
 	void UseProgram();
 
+	GLuint GetID() { return m_programId; }
+
 private:
 	GLuint m_programId = 0;
 

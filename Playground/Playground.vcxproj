@@ -156,13 +156,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dependencies\c\glad.c" />
+    <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\ShaderProgram.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\ShaderProgram.h" />
     <ClInclude Include="src\Shader.h" />
+    <ClInclude Include="src\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragment.glsl" />

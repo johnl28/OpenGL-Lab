@@ -7,54 +7,13 @@
 
 #include "src/Shader.h"
 #include "src/ShaderProgram.h"
+#include "src/VertexBuffer.h"
+#include "src/IndexBuffer.h"
 
 #define WIDTH 700
 #define HEIGHT 500
 
 
-struct Vertex
-{
-	glm::vec3 position;
-	glm::vec4 color;
-};
-
-
-class GLObject
-{
-public:
-	GLObject()
-	{
-		glGenBuffers(1, &m_buffer);
-	}
-
-	~GLObject()
-	{
-		//glDeleteBuffers(1, &m_buffer);
-	}
-
-	void SetData(const Vertex *data, size_t count)
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
-		glBufferData(GL_ARRAY_BUFFER, count * sizeof(Vertex), data, GL_DYNAMIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void *)sizeof(glm::vec3));
-
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-	}
-
-	void Draw()
-	{
-		//glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
-		glDrawArrays(GL_TRIANGLES, 0, 4);
-	}
-
-private:
-	GLuint m_buffer;
-};
-
-GLObject* test = nullptr;
 
 void Error(int error, const char* details)
 {
@@ -73,32 +32,6 @@ void OnKeyDown(GLFWwindow* window, int key, int scancode, int action, int mods)
 		glfwSetWindowShouldClose(window, 1);
 		break;
 		
-	case GLFW_KEY_D:
-	{
-
-
-
-		Vertex v[] = {
-			Vertex {
-				glm::vec3{ -0.2f, -0.2f, 0.0f },
-				glm::vec4 { 0.988f, 0.549f, 0.012f, 1.0f }
-			},
-
-			Vertex{
-				glm::vec3 { 0.5f, -0.5f, 0.0f },
-				glm::vec4 { 0.988f, 0.549f, 0.012f, 1.0f }
-			},
-
-			Vertex{
-				glm::vec3 { 0.0f,  0.5f, 0.0f },
-				glm::vec4 { 252, 140, 3, 1.0f }
-			},
-		};
-
-		test->SetData(v, 3);
-		break;
-	}
-
 	default:
 		break;
 	}
@@ -116,8 +49,10 @@ int main()
 		return -1;
 	}
 
-	glfwWindowHint(GLFW_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
 	glfwSetErrorCallback(Error);
 
@@ -133,6 +68,8 @@ int main()
 
 
 	glfwMakeContextCurrent(window);
+
+	glfwSwapInterval(1);
 	glfwSetKeyCallback(window, OnKeyDown);
 
 
@@ -144,6 +81,8 @@ int main()
 	}
 
 	glViewport(0, 0, WIDTH, HEIGHT);
+
+	std::cout << glGetString(GL_VERSION) << std::endl;
 
 	float positions[] = {
 		-0.3f, 0.5f,
@@ -189,11 +128,11 @@ int main()
 
 	};
 
-	GLuint VBO;
-	glGenBuffers(1, &VBO);
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+	VertexBuffer vb(positions, sizeof(positions));
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
@@ -201,10 +140,8 @@ int main()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (const void *) (sizeof(float) * 2));
 
-	GLuint IBO;
-	glGenBuffers(1, &IBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	
+	IndexBuffer ib(indices, 6);
 	
 
 	Shader vertShader("shaders/vertex.glsl", GL_VERTEX_SHADER);
@@ -217,13 +154,35 @@ int main()
 	program.AttachShader(&vertShader);
 	program.AttachShader(&fragShader);
 	program.LinkProgram();
-	program.UseProgram();
+
 	
 
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	auto uniformId = glGetUniformLocation(program.GetID(), "u_Color");
+
+
+	float r = 0.05f;
+
+	float incr = 0.05f;
 	
 	while (!glfwWindowShouldClose(window))
 	{
-		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(GLuint), GL_UNSIGNED_INT, nullptr);
+		program.UseProgram();
+		glUniform4f(uniformId, r, 0.0f, 1.0f, 1.0f);
+		glBindVertexArray(VAO);
+
+		if (r < 0.0f)
+			incr = 0.05f;
+		else if (r > 1.0f)
+			incr = -0.05f;
+
+		r += incr;
+
+		glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
