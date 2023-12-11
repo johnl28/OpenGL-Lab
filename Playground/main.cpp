@@ -8,6 +8,8 @@
 #include "src/Shader.h"
 #include "src/ShaderProgram.h"
 
+#define WIDTH 700
+#define HEIGHT 500
 
 
 struct Vertex
@@ -118,10 +120,9 @@ int main()
 	glfwWindowHint(GLFW_VERSION_MINOR, 3);
 
 	glfwSetErrorCallback(Error);
-	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 
-	GLFWwindow* window = glfwCreateWindow(600, 500, "GLFW window", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "GLFW window", nullptr, nullptr);
 
 	if (!window)
 	{
@@ -129,7 +130,6 @@ int main()
 		glfwTerminate();
 		return -1;
 	}
-
 
 
 	glfwMakeContextCurrent(window);
@@ -143,76 +143,87 @@ int main()
 		return -1;
 	}
 
-	glViewport(0, 0, 600, 500);
+	glViewport(0, 0, WIDTH, HEIGHT);
 
-	const Vertex vertices[] = {
-		Vertex { 
-			glm::vec3{ -0.5f, -0.5f, 0.0f },
-			glm::vec4 { 1.0f, 0.0f, 0.0f, 1.0f }
-		},
+	float positions[] = {
+		-0.3f, 0.5f,
+		0.0f, 1.0f, 0.0f, 1.0f,
 
-		Vertex { 
-			glm::vec3 { 0.5f, -0.5f, 0.0f },
-			glm::vec4 { 0.0f, 1.0f, 0.0f, 1.0f }
-		},
+		0.3f, 0.5f,
+		0.0f, 1.0f, 0.0f, 1.0f,
 
-		Vertex {
-			glm::vec3 { 0.0f,  0.5f, 0.0f },
-			glm::vec4 { 0.0f, 0.0f, 1.0f, 0.0f }
-		},
+		0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		// first triangle
 
-		Vertex {
-			glm::vec3 { 1.0f,  -0.5f, 0.0f },
-			glm::vec4 { 0.0f, 0.0f, 1.0f, 0.0f }
-		},
+		-0.3f, 0.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+
+		0.3f, 0.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+
+		0.0f, 0.5f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		//second
+
+		-0.1f, -0.3f,
+		0.32f, 0.13f, 0.0f, 1.0f,
+
+		0.1f, 0.0f,
+		0.32f, 0.13f, 0.0f, 1.0f,
+
+		-0.1f, 0.0f,
+		0.32f, 0.13f, 0.0f, 1.0f,
+
+		0.1f, -0.3f,
+		0.32f, 0.13f, 0.0f, 1.0f,
+		//second
 
 	};
 
-	test = new GLObject();
-	test->SetData(vertices, 4);
+	GLuint indices[] = {
+		0, 1, 2,
+		3, 4, 5,
+		6, 7, 8,
+		6, 9, 7
+
+	};
+
+	GLuint VBO;
+	glGenBuffers(1, &VBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (const void *) (sizeof(float) * 2));
+
+	GLuint IBO;
+	glGenBuffers(1, &IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	
 
+	Shader vertShader("shaders/vertex.glsl", GL_VERTEX_SHADER);
+	vertShader.Compile();
 
+	Shader fragShader("shaders/fragment.glsl", GL_FRAGMENT_SHADER);
+	fragShader.Compile();
+
+	ShaderProgram program;
+	program.AttachShader(&vertShader);
+	program.AttachShader(&fragShader);
+	program.LinkProgram();
+	program.UseProgram();
 	
-	Shader vertex("shaders/vertex.glsl", GL_VERTEX_SHADER);
-	vertex.Compile();
 
-	Shader fragment("shaders/fragment.glsl", GL_FRAGMENT_SHADER);
-	fragment.Compile();
-
-	ShaderProgram shaderProgram;
-	shaderProgram.AttachShader(&vertex);
-	shaderProgram.AttachShader(&fragment);
-	shaderProgram.LinkProgram();
-	shaderProgram.UseProgram();
-
-
-	//auto shaderProgram = glCreateProgram();
-
-	//glAttachShader(shaderProgram, vertex.GetID());
-	//glAttachShader(shaderProgram, fragment.GetID());
-	//glLinkProgram(shaderProgram);
-	//
-	//GLint success = 0;
-	//glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	//if (!success)
-	//{
-	//	char buff[500];
-	//	glGetProgramInfoLog(shaderProgram, 500, nullptr, buff);
-	//	std::cout << buff << std::endl;
-	//}
-
-	//glUseProgram(shaderProgram);
-
-
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	
 	while (!glfwWindowShouldClose(window))
 	{
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		test->Draw();
-
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(GLuint), GL_UNSIGNED_INT, nullptr);
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
