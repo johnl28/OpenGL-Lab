@@ -1,11 +1,11 @@
 #version 400 core
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec4 aColor;
+layout (location = 1) in vec2 texCoord;
 
-out vec4 inFragColor;
+out vec2 v_TexCoord;
 
 void main()
 {
 	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-	inFragColor = aColor;
+	v_TexCoord = texCoord;
 }

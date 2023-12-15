@@ -156,21 +156,27 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dependencies\c\glad.c" />
+    <ClCompile Include="dependencies\c\stb_image.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\ShaderProgram.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
+    <ClCompile Include="src\VertexArray.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dependencies\include\stb\stb_image.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\ShaderProgram.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\VertexBuffer.h" />
+    <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\VertexArray.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\fragment.glsl" />
-    <None Include="shaders\vertex.glsl" />
+    <None Include="assets\shaders\fragment.glsl" />
+    <None Include="assets\shaders\vertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

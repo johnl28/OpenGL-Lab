@@ -9,6 +9,8 @@
 #include "src/ShaderProgram.h"
 #include "src/VertexBuffer.h"
 #include "src/IndexBuffer.h"
+#include "src/Texture.h"
+#include "src/VertexArray.h"
 
 #define WIDTH 700
 #define HEIGHT 500
@@ -31,6 +33,17 @@ void OnKeyDown(GLFWwindow* window, int key, int scancode, int action, int mods)
 	case GLFW_KEY_ESCAPE:
 		glfwSetWindowShouldClose(window, 1);
 		break;
+
+	case GLFW_KEY_A:
+	{
+		static bool a = false;
+		a = !a;
+		auto draw = a ? GL_POLYGON_MODE: GL_FILL;
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		printf("AAAA \n");
+		break;
+	}
 		
 	default:
 		break;
@@ -42,7 +55,6 @@ void OnKeyDown(GLFWwindow* window, int key, int scancode, int action, int mods)
 int main()
 {
 
-
 	if (glfwInit() != GLFW_TRUE)
 	{
 		printf("Fail to init glfw.");
@@ -52,7 +64,6 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
 
 	glfwSetErrorCallback(Error);
 
@@ -72,7 +83,6 @@ int main()
 	glfwSwapInterval(1);
 	glfwSetKeyCallback(window, OnKeyDown);
 
-
 	int version = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	if (!version)
 	{
@@ -84,41 +94,42 @@ int main()
 
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
-	float positions[] = {
+	GLfloat positions[] = {
 		-0.3f, 0.5f,
-		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0, 1.0f,
 
 		0.3f, 0.5f,
-		0.0f, 1.0f, 0.0f, 1.0f,
+		0.4f, 1.0f,
 
 		0.0f, 1.0f,
-		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0, 0.0f,
 		// first triangle
 
 		-0.3f, 0.0f,
-		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0, 0.5f,
 
 		0.3f, 0.0f,
-		0.0f, 1.0f, 0.0f, 1.0f,
+		0.4f, 0.5f,
 
 		0.0f, 0.5f,
-		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0, 0.0f,
 		//second
 
 		-0.1f, -0.3f,
-		0.32f, 0.13f, 0.0f, 1.0f,
+		0.6f, 1.0f,
 
 		0.1f, 0.0f,
-		0.32f, 0.13f, 0.0f, 1.0f,
+		1.0f, 1.0f,
 
 		-0.1f, 0.0f,
-		0.32f, 0.13f, 0.0f, 1.0f,
+		0.6f, 0.0f,
 
 		0.1f, -0.3f,
-		0.32f, 0.13f, 0.0f, 1.0f,
+		1.0f, 0.0f,
 		//second
 
 	};
+
 
 	GLuint indices[] = {
 		0, 1, 2,
@@ -128,61 +139,51 @@ int main()
 
 	};
 
-	GLuint VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	//GLuint VAO;
+	//glGenVertexArrays(1, &VAO);
+	//glBindVertexArray(VAO);
 
+	VertexArray va;
 	VertexBuffer vb(positions, sizeof(positions));
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
 
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (const void *) (sizeof(float) * 2));
+	va.AddAttribute<GLfloat>(2);
+	va.AddAttribute<GLfloat>(2);
+	va.CreateAttribPointers();
 
+	//glEnableVertexAttribArray(0);
+	//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, 0);
+	//
+	//glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_TRUE, sizeof(float) * 4, (const void *) (sizeof(float) * 2));
 	
-	IndexBuffer ib(indices, 6);
+	IndexBuffer ib(indices, 12);
 	
 
-	Shader vertShader("shaders/vertex.glsl", GL_VERTEX_SHADER);
+	Shader vertShader("assets/shaders/vertex.glsl", GL_VERTEX_SHADER);
 	vertShader.Compile();
 
-	Shader fragShader("shaders/fragment.glsl", GL_FRAGMENT_SHADER);
+	Shader fragShader("assets/shaders/fragment.glsl", GL_FRAGMENT_SHADER);
 	fragShader.Compile();
 
 	ShaderProgram program;
 	program.AttachShader(&vertShader);
 	program.AttachShader(&fragShader);
 	program.LinkProgram();
+	program.SetUniform1i("u_Texture", 2);
 
-	
-
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	auto uniformId = glGetUniformLocation(program.GetID(), "u_Color");
+	Texture texture("assets/textures/c_tree.jpg");
+	texture.Bind(0);
 
 
-	float r = 0.05f;
-
-	float incr = 0.05f;
 	
 	while (!glfwWindowShouldClose(window))
 	{
-		program.UseProgram();
-		glUniform4f(uniformId, r, 0.0f, 1.0f, 1.0f);
-		glBindVertexArray(VAO);
-
-		if (r < 0.0f)
-			incr = 0.05f;
-		else if (r > 1.0f)
-			incr = -0.05f;
-
-		r += incr;
-
+		program.Bind();
+		//glBindVertexArray(VAO);
+		
 		glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr);
+
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}
